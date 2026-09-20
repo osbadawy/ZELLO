@@ -1,0 +1,584 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  PARTIALLY_FULFILLED
+  FULFILLED
+  DELIVERED
+  CANCELLED
+}
+
+enum SupplierOrderStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  SHIPPED
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+enum InventorySyncStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+// ============================================================
+// PRODUCTS
+// ============================================================
+
+model Product {
+  id String @id @default(cuid())
+
+  // Product information
+  name             String
+  slug             String  @unique
+  description      String  @db.Text
+  shortDescription String? @db.Text
+
+  // Pricing
+  price    Decimal @db.Decimal(10, 2)
+  currency String  @default("USD")
+
+  // Instagram video
+  instagramVideoUrl String? @db.Text
+
+  // Availability
+  isActive Boolean @default(false)
+
+  // Relations
+  images   ProductImage[]
+  variants ProductVariant[]
+  categories Category[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// ============================================================
+// CATEGORY
+// ============================================================
+model Category {
+  id String @id @default(cuid())
+
+  name        String
+  slug        String  @unique
+  description String? @db.Text
+
+  isActive Boolean @default(true)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================
+// PRODUCT IMAGES
+// ============================================================
+
+model ProductImage {
+  id String @id @default(cuid())
+
+  // Product relation
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Image information
+  fileName    String
+  contentType String
+  sizeBytes   Int
+
+  // Actual image stored in PostgreSQL
+  data Bytes @db.ByteA
+
+  // Display settings
+  altText   String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([productId, sortOrder])
+}
+
+// ============================================================
+// PRODUCT VARIANTS
+// ============================================================
+
+model ProductVariant {
+  id String @id @default(cuid())
+
+  // Product relation
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Internal SKU
+  sku String @unique
+
+  // Variant information
+  name  String?
+  size  String?
+  color String?
+
+  // Additional options
+  // Example: {"material": "Leather", "capacity": "500ml"}
+  options Json?
+
+  // Pricing
+  // NULL means use Product.price
+  price Decimal? @db.Decimal(10, 2)
+
+  // Availability
+  isActive Boolean @default(true)
+
+  // Relations
+  supplierProducts SupplierProduct[]
+  orderItems       OrderItem[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([isActive])
+}
+
+// ============================================================
+// SUPPLIERS
+// ============================================================
+
+model Supplier {
+  id String @id @default(cuid())
+
+  // Supplier information
+  name    String
+  website String?
+
+  // API integration
+  // Examples: CJ_DROPSHIPPING, PRINTFUL, CUSTOM
+  provider String
+
+  // API configuration
+  apiBaseUrl String?
+
+  // Reference to environment variable containing credentials
+  // Example: CJ_DROPSHIPPING_API_KEY
+  apiKeyEnvName String?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Relations
+  products       SupplierProduct[]
+  supplierOrders SupplierOrder[]
+  inventorySyncs InventorySync[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([provider])
+  @@index([isActive])
+}
+
+// ============================================================
+// SUPPLIER PRODUCTS
+// ============================================================
+
+model SupplierProduct {
+  id String @id @default(cuid())
+
+  // Supplier relation
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Product variant relation
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  // Supplier product identifiers
+  supplierSku       String
+  supplierProductId String?
+
+  // Supplier pricing
+  cost     Decimal @db.Decimal(10, 2)
+  currency String  @default("USD")
+
+  // Inventory
+  stockQuantity Int     @default(0)
+  isAvailable   Boolean @default(false)
+
+  // Shipping information
+  estimatedShippingDays Int?
+
+  // Synchronization
+  lastSyncedAt DateTime?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Relations
+  supplierOrderItems SupplierOrderItem[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([supplierId, supplierSku])
+  @@unique([supplierId, variantId])
+
+  @@index([variantId])
+  @@index([isAvailable])
+}
+
+// ============================================================
+// CUSTOMERS
+// ============================================================
+
+model Customer {
+  id String @id @default(cuid())
+
+  // Optional Better Auth user ID
+  // Guest customers do not need an account
+  userId String? @unique
+
+  // Customer information
+  firstName String
+  lastName  String
+  email     String @unique
+  phone     String?
+
+  // Default shipping address
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+
+  // Relations
+  orders Order[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+// ============================================================
+// ORDERS
+// ============================================================
+
+model Order {
+  id String @id @default(cuid())
+
+  // Customer relation
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Customer-facing order number
+  orderNumber String @unique
+
+  // Payment
+  paymentProvider String?
+  paymentIntentId String? @unique
+
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Order status
+  status OrderStatus @default(PENDING)
+
+  // Pricing
+  subtotal       Decimal @db.Decimal(10, 2)
+  shippingAmount Decimal @default(0) @db.Decimal(10, 2)
+  taxAmount      Decimal @default(0) @db.Decimal(10, 2)
+  discountAmount Decimal @default(0) @db.Decimal(10, 2)
+
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  currency String @default("USD")
+
+  // Shipping information
+  // Snapshot of the customer's address at checkout
+  shippingFullName String
+  shippingEmail    String
+  shippingPhone    String?
+
+  shippingAddressLine1 String
+  shippingAddressLine2 String?
+  shippingCity         String
+  shippingState        String?
+  shippingPostalCode   String?
+  shippingCountry      String
+
+  // Relations
+  items          OrderItem[]
+  supplierOrders SupplierOrder[]
+
+  // Timestamps
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([customerId])
+  @@index([paymentStatus])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================================
+// ORDER ITEMS
+// ============================================================
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  // Order relation
+  orderId String
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Product variant relation
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+
+  // Product snapshot
+  productName String
+  variantName String?
+  sku         String
+
+  // Purchase information
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  // Relations
+  supplierOrderItems SupplierOrderItem[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([variantId])
+}
+
+// ============================================================
+// SUPPLIER ORDERS
+// ============================================================
+
+model SupplierOrder {
+  id String @id @default(cuid())
+
+  // Customer order relation
+  orderId String
+  order   Order @relation(fields: [orderId], references: [id])
+
+  // Supplier relation
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Supplier order reference
+  externalOrderId String?
+
+  // Status
+  status SupplierOrderStatus @default(PENDING)
+
+  // Supplier pricing
+  totalCost Decimal? @db.Decimal(10, 2)
+  currency  String   @default("USD")
+
+  // Shipping information
+  trackingNumber String?
+  trackingUrl    String?
+  carrier        String?
+
+  // Error handling
+  errorMessage String? @db.Text
+
+  // Relations
+  items SupplierOrderItem[]
+
+  // Timestamps
+  submittedAt DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([supplierId, externalOrderId])
+
+  @@index([orderId])
+  @@index([supplierId])
+  @@index([status])
+}
+
+// ============================================================
+// SUPPLIER ORDER ITEMS
+// ============================================================
+
+model SupplierOrderItem {
+  id String @id @default(cuid())
+
+  // Supplier order relation
+  supplierOrderId String
+  supplierOrder   SupplierOrder @relation(fields: [supplierOrderId], references: [id], onDelete: Cascade)
+
+  // Customer order item relation
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+
+  // Supplier product relation
+  supplierProductId String
+  supplierProduct   SupplierProduct @relation(fields: [supplierProductId], references: [id])
+
+  // Quantity
+  quantity Int
+
+  // Supplier cost snapshot
+  unitCost Decimal @db.Decimal(10, 2)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@unique([supplierOrderId, orderItemId])
+
+  @@index([orderItemId])
+  @@index([supplierProductId])
+}
+
+// ============================================================
+// INVENTORY SYNCHRONIZATION
+// ============================================================
+
+model InventorySync {
+  id String @id @default(cuid())
+
+  // Supplier relation
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  // Synchronization status
+  status InventorySyncStatus @default(PENDING)
+
+  // Synchronization results
+  productsChecked Int @default(0)
+  productsUpdated Int @default(0)
+  productsFailed  Int @default(0)
+
+  // Error information
+  errorMessage String? @db.Text
+
+  // Timestamps
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([startedAt])
+}
+// ============================================================
+// BETTER AUTH (email/password + Admin plugin)
+// ============================================================
+// Better Auth owns account IDs and password hashes. Password hashes belong
+// in Account.password, never in User or Customer.
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Better Auth Admin plugin: default role names are lowercase "user"/"admin".
+  role       String?   @default("user")
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  sessions Session[]
+  accounts Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String    @id
+  expiresAt      DateTime
+  token          String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy String?
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String    @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
