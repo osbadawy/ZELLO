@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useState } from "react";
 
-import HeroParticles from "./HeroParticles";
-import HeroFlowField from "./HeroFlowField";
 import PentaLabsParticleField from "./HeroFlowField";
+import HeroFloatingCards from "./HeroFloatingCards";
 
 export default function Hero() {
   const [navbarHeight, setNavbarHeight] = useState(76);
-  const leftPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const navbar = document.getElementById("penta-navbar");
@@ -22,268 +20,95 @@ export default function Hero() {
     updateHeight();
 
     const observer = new ResizeObserver(updateHeight);
-
     observer.observe(navbar);
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
-
-  
 
   return (
     <section
       aria-labelledby="hero-title"
-      style={{
-        height: `calc(100svh - ${navbarHeight}px)`,
-      }}
-      className="relative grid min-h-0 grid-cols-1 grid-rows-[minmax(0,55fr)_minmax(0,45fr)] overflow-hidden border-x-2 border-b-2 border-[#1c242b] lg:grid-cols-[1.05fr_0.95fr] lg:grid-rows-1"
+      style={{ minHeight: `calc(100svh - ${navbarHeight}px)` }}
+      className="relative isolate flex w-full items-center justify-center overflow-hidden bg-[#080d18] px-5 py-16 sm:px-8 lg:px-12"
     >
-      {/* INTRO OVERLAY */}
 
+      {/* FULL-SCREEN PARTICLE BACKGROUND */}
+      <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
+        <PentaLabsParticleField
+          style={{
+            width: "100%",
+            height: "100%",
+            minHeight: "100%",
+          }}
+          background="#080d18"
+          particleColor="#dce8ff"
+          density={0.02}
+          speed={0.7}
+          interactionRadius={150}
+          interactionStrength={1}
+        />
+      </div>
+
+      {/* BACKGROUND GRADIENT */}
       <div
         aria-hidden="true"
-        className="hero-intro-overlay pointer-events-none absolute inset-0 z-50 bg-[#1c242b]"
+        className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-transparent via-[#080d18]/10 to-[#080d18]/50"
       />
 
-      {/* LEFT SIDE */}
+      {/* FLOATING PRODUCT CARDS */}
+      <HeroFloatingCards />
 
-      <div
-        ref={leftPanelRef}
-        className="relative isolate flex min-h-0 flex-col justify-between overflow-y-auto bg-[#f3f5f7] px-5 py-9 sm:px-10 lg:px-[clamp(28px,6vw,90px)] lg:py-[clamp(28px,6vw,78px)]"
-      >
-        <HeroParticles parentRef={leftPanelRef} />
-        {/* STATUS */}
+      {/* CENTRAL CONTENT */}
+      <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl items-center justify-center">
 
-        <div className="hero-intro-meta flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-[#66727d]">
-          <span className="inline-block size-[9px] border-2 border-[#1c242b] bg-[#91bfa7]" />
+        {/* GLASS PANEL */}
+        <div className="pointer-events-auto relative w-full max-w-[1290px] overflow-hidden rounded-[32px] border border-white/15 bg-white/[0.07] px-6 py-12 text-center text-white shadow-[0_24px_80px_rgba(0,0,0,0.20)] backdrop-blur-xl backdrop-saturate-150 sm:rounded-[40px] sm:px-12 sm:py-16 lg:px-16 lg:py-20">
 
-          Independent goods / online now
-        </div>
+          {/* Glass highlight */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
+          />
 
-        {/* HEADING AND DESCRIPTION */}
-
-        <div>
+          {/* MAIN HEADING */}
           <h1
             id="hero-title"
-            className="hero-intro-heading m-0 max-w-[720px] text-[clamp(58px,8vw,128px)] leading-[0.83] font-bold tracking-[-0.105em]"
+            className="mx-auto max-w-[1120px] text-[clamp(3.25rem,7vw,6.5rem)] font-semibold leading-[1.05] tracking-[-0.065em] text-white"
           >
-            USEFUL
-            <br />
-
-            <span className="text-[#2f6fed]">
-              OBJECTS
-            </span>
-
-            <br />
-
-            FOR NOW.
-            <span
-              aria-hidden="true"
-              className="hero-cursor ml-2 inline-block h-[0.7em] w-[0.055em] bg-[#2f6fed] align-baseline"
-            />
+            Better things Less noise.
           </h1>
 
-          <p className="hero-intro-content mt-7 max-w-[400px] text-[15px] leading-[1.55] text-[#66727d]">
-            Everyday equipment with a little more intention.
-            Curated utility, hard-wearing forms, and modern
-            objects built for repeat use.
-          </p>
-
           {/* ACTIONS */}
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row">
 
-          <div className="hero-intro-content mt-9 flex flex-wrap items-center gap-5">
+            {/* Primary button */}
             <a
               href="#shop"
-              className="inline-flex min-h-12 items-center justify-center border-2 border-[#1c242b] bg-[#1c242b] px-[18px] text-xs font-semibold text-white shadow-[5px_5px_0_#2f6fed] transition-all duration-200 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-[2px_2px_0_#2f6fed]"
+              className="group inline-flex min-h-[50px] w-full items-center justify-center gap-3 rounded-full bg-white px-7 py-3 text-[13px] font-semibold tracking-[-0.01em] text-[#080d18] shadow-[0_8px_30px_rgba(255,255,255,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#edf2ff] hover:shadow-[0_12px_35px_rgba(255,255,255,0.18)] active:scale-[0.98] sm:w-auto"
             >
-              SHOP THE DROP ↘
+              Explore the collection
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              >
+                <path d="M7 17 17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
             </a>
 
-            <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#66727d]">
-              12 units / limited run
-            </span>
           </div>
         </div>
       </div>
-
-      {/* RIGHT SIDE */}
-
-            <PentaLabsParticleField
-        style={{ minHeight: '70vh' }}
-        background="#73738f"
-        particleColor="#f5f4f4"
-        density={0.02}
-        speed={0.9}
-        interactionRadius={150}
-        interactionStrength={1}
-      />
-
-      {/* INTRO ANIMATIONS */}
-
-    <style jsx>{`
-      /* Initial screen reveal */
-      .hero-cursor {
-        animation: cursorBlink 1s steps(1, end) infinite;
-      }
-    
-      @keyframes heroOverlay {
-        0% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-    
-        45% {
-          opacity: 1;
-        }
-    
-        100% {
-          opacity: 0;
-          transform: translateY(-100%);
-        }
-      }
-    
-      /* Digital heading reveal */
-    
-      @keyframes heroHeading {
-        0% {
-          opacity: 0;
-          clip-path: inset(0 100% 0 0);
-          transform: translateY(8px);
-        }
-    
-        35% {
-          opacity: 1;
-          clip-path: inset(0 65% 0 0);
-        }
-    
-        65% {
-          clip-path: inset(0 25% 0 0);
-          transform: translateY(0);
-        }
-    
-        100% {
-          opacity: 1;
-          clip-path: inset(0 0 0 0);
-          transform: translateY(0);
-        }
-      }
-    
-      /* Supporting content */
-    
-      @keyframes heroReveal {
-        from {
-          opacity: 0;
-          transform: translateY(16px);
-        }
-    
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    
-      /* Right panel reveal */
-    
-      @keyframes heroVisual {
-        from {
-          opacity: 0;
-          clip-path: inset(0 0 100% 0);
-        }
-    
-        to {
-          opacity: 1;
-          clip-path: inset(0 0 0 0);
-        }
-      }
-    
-      /* Product entrance */
-    
-      @keyframes heroProduct {
-        from {
-          opacity: 0;
-          transform: translate(-50%, -46%) rotate(-4deg)
-            scale(0.94);
-        }
-    
-        to {
-          opacity: 1;
-          transform: translate(-50%, -50%) rotate(-4deg)
-            scale(1);
-        }
-      }
-    
-      /* Terminal cursor */
-    
-      @keyframes cursorBlink {
-        0%,
-        49% {
-          opacity: 1;
-        }
-    
-        50%,
-        100% {
-          opacity: 0;
-        }
-      }
-    
-      .hero-intro-overlay {
-        animation: heroOverlay 0.9s
-          cubic-bezier(0.76, 0, 0.24, 1) both;
-      }
-    
-      .hero-intro-heading {
-        animation: heroHeading 0.85s
-          steps(18, end) both;
-        animation-delay: 0.35s;
-      }
-    
-      .hero-intro-meta {
-        animation: heroReveal 0.5s ease-out both;
-        animation-delay: 0.65s;
-      }
-    
-      .hero-intro-content {
-        animation: heroReveal 0.7s
-          cubic-bezier(0.22, 1, 0.36, 1) both;
-        animation-delay: 0.85s;
-      }
-    
-      .hero-intro-visual {
-        animation: heroVisual 1s
-          cubic-bezier(0.22, 1, 0.36, 1) both;
-        animation-delay: 0.2s;
-      }
-    
-      .hero-intro-product {
-        animation: heroProduct 1s
-          cubic-bezier(0.22, 1, 0.36, 1) both;
-        animation-delay: 0.65s;
-      }
-    
-      .hero-intro-detail {
-        animation: heroReveal 0.6s ease-out both;
-        animation-delay: 1s;
-      }
-    
-      /* Accessibility */
-    
-      @media (prefers-reduced-motion: reduce) {
-        .hero-intro-heading,
-        .hero-intro-meta,
-        .hero-intro-content,
-        .hero-intro-visual,
-        .hero-intro-product,
-        .hero-intro-detail {
-          animation: none;
-        }
-    
-        .hero-intro-overlay {
-          display: none;
-        }
-      }
-    `}</style>
     </section>
-    );
-  }
+  );
+}

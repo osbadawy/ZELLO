@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { ArrowRight, ShoppingBag, X, Trash2 } from "lucide-react";
+
 import type { CartItem } from "./types";
 import { formatPrice } from "./utils";
 
@@ -11,48 +13,362 @@ type CartDrawerProps = {
   onRemove: (productId: string) => void;
 };
 
-export default function CartDrawer({ cart, isOpen, onClose, onRemove }: CartDrawerProps) {
+export default function CartDrawer({
+  cart,
+  isOpen,
+  onClose,
+  onRemove,
+}: CartDrawerProps) {
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  /* =========================================
+     KEYBOARD & SCROLL MANAGEMENT
+  ========================================= */
+
   useEffect(() => {
     if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+    const previousOverflow = document.body.style.overflow;
+
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    document.body.style.overflow = "hidden";
+
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const drawer = drawerRef.current;
+      if (!drawer) return;
+
+      const focusable = Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+
+      previousFocusRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
 
   return (
     <>
-      <button type="button" className="fixed inset-0 z-40 bg-[#1c242b]/45" onClick={onClose} aria-label="Close shopping bag" />
-      <aside role="dialog" aria-modal="true" aria-label="Shopping bag" className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[410px] flex-col border-l-2 border-[#1c242b] bg-white shadow-[-14px_0_30px_rgba(28,36,43,0.15)]">
-        <div className="flex items-center justify-between border-b-2 border-[#1c242b] bg-[#d8e4ff] p-5">
-          <h2 className="text-[22px] font-bold tracking-[-0.07em]">YOUR BAG <span className="font-mono text-[11px] font-medium tracking-[0.06em]">/ {String(count).padStart(2, "0")}</span></h2>
-          <button type="button" onClick={onClose} aria-label="Close shopping bag" className="text-[22px] leading-none">×</button>
-        </div>
-        <div className="flex-1 overflow-auto p-5">
-          {cart.length === 0 ? (
-            <p className="text-[13px] leading-[1.5] text-[#66727d]">Your bag is currently empty.<br />Find something useful in the drop.</p>
-          ) : cart.map((item) => (
-            <div key={item.id} className="flex justify-between gap-4 border-b border-[#c3cdd5] py-[13px]">
-              <div>
-                <strong className="block text-[13px]">{item.name}</strong>
-                <small className="font-mono text-[10px] text-[#66727d]">QTY {item.quantity} × {formatPrice(item.price)}</small>
-              </div>
-              <div className="text-right">
-                <strong className="block text-[13px]">{formatPrice(item.price * item.quantity)}</strong>
-                <button type="button" onClick={() => onRemove(item.id)} className="text-[11px] text-[#66727d] underline">remove</button>
-              </div>
+      {/* =========================================
+          BACKDROP
+      ========================================= */}
+
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close shopping bag"
+        aria-hidden={!isOpen}
+        tabIndex={isOpen ? 0 : -1}
+        className={`fixed inset-0 z-[100] bg-[#080E18]/65 backdrop-blur-[6px] transition-[opacity,visibility] duration-500 ease-out ${
+          isOpen
+            ? "visible pointer-events-auto opacity-100"
+            : "invisible pointer-events-none opacity-0"
+        }`}
+      />
+
+      {/* =========================================
+          CART DRAWER
+      ========================================= */}
+
+      <aside
+        ref={drawerRef}
+        role="dialog"
+        aria-modal={isOpen ? true : undefined}
+        aria-hidden={!isOpen}
+        aria-labelledby="cart-drawer-title"
+        tabIndex={-1}
+        className={`fixed inset-y-0 right-0 z-[101] flex h-[100dvh] w-full max-w-[460px] flex-col overflow-hidden border-l border-white/[0.12] bg-[#080E18]/95 text-white shadow-[-24px_0_100px_rgba(0,0,0,0.35)] backdrop-blur-3xl backdrop-saturate-150 transition-[transform,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isOpen
+            ? "visible translate-x-0"
+            : "invisible translate-x-full"
+        }`}
+      >
+
+        {/* =====================================
+            GLASS HIGHLIGHT
+        ===================================== */}
+
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-px bg-gradient-to-b from-white/30 via-white/10 to-transparent" />
+
+        {/* =====================================
+            HEADER
+        ===================================== */}
+
+        <div className="relative flex shrink-0 items-center justify-between border-b border-white/[0.08] px-6 py-6 sm:px-8 sm:py-7">
+
+          <div className="flex items-center gap-3">
+
+            {/* BAG ICON */}
+            <div className="flex size-11 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.07] backdrop-blur-xl">
+              <ShoppingBag size={19} strokeWidth={1.6} className="text-white/85" />
             </div>
-          ))}
+
+            {/* TITLE */}
+            <div>
+              <h2
+                id="cart-drawer-title"
+                className="text-[19px] font-semibold leading-tight tracking-[-0.04em] text-white"
+              >
+                Your bag
+              </h2>
+
+              <p className="mt-1 text-[11px] font-medium text-white/40">
+                {count === 0
+                  ? "No items yet"
+                  : `${count} ${count === 1 ? "item" : "items"} in your bag`}
+              </p>
+            </div>
+          </div>
+
+          {/* CLOSE BUTTON */}
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close shopping bag"
+            tabIndex={isOpen ? 0 : -1}
+            className="flex size-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] text-white/60 backdrop-blur-xl transition-all duration-300 hover:border-white/25 hover:bg-white/[0.12] hover:text-white active:scale-95"
+          >
+            <X size={18} strokeWidth={1.7} />
+          </button>
         </div>
-        <div className="border-t-2 border-[#1c242b] p-5">
-          <div className="mb-4 flex justify-between font-mono text-[13px]"><span>TOTAL</span><strong>{formatPrice(total)}</strong></div>
-          <button type="button" disabled={cart.length === 0} onClick={() => window.alert("Demo checkout: connect this button to your checkout provider.")} className="inline-flex min-h-12 w-full items-center justify-center border-2 border-[#1c242b] bg-[#1c242b] px-[18px] text-xs font-semibold text-white shadow-[5px_5px_0_#2f6fed] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-[2px_2px_0_#2f6fed] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0">CHECKOUT ↗</button>
+
+        {/* =====================================
+            CONTENT
+        ===================================== */}
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-7 [scrollbar-color:#ffffff20_transparent] [scrollbar-width:thin] sm:px-8">
+
+          {cart.length === 0 ? (
+
+            /* =================================
+                EMPTY CART
+            ================================= */
+
+            <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center">
+
+              {/* EMPTY BAG ICON */}
+              <div className="relative mb-7 flex size-24 items-center justify-center rounded-[30px] border border-white/[0.12] bg-white/[0.05] shadow-[0_20px_60px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+                <ShoppingBag size={34} strokeWidth={1.2} className="text-white/55" />
+
+                <span className="absolute -right-1 -top-1 flex size-7 items-center justify-center rounded-full border border-white/[0.12] bg-[#111d30] text-[11px] font-semibold text-[#A9C5FF]">
+                  0
+                </span>
+              </div>
+
+              {/* EMPTY MESSAGE */}
+              <h3 className="text-[22px] font-semibold tracking-[-0.045em] text-white">
+                Your bag is empty.
+              </h3>
+
+              <p className="mt-3 max-w-[250px] text-[13px] leading-[1.7] text-white/45">
+                Discover something worth keeping. Your next favorite find is just a click away.
+              </p>
+
+              {/* CONTINUE SHOPPING */}
+              <button
+                type="button"
+                onClick={onClose}
+                tabIndex={isOpen ? 0 : -1}
+                className="group mt-8 inline-flex min-h-11 items-center justify-center gap-2.5 rounded-full border border-white/[0.15] bg-white/[0.08] px-6 text-[12px] font-medium text-white backdrop-blur-xl transition-all duration-300 hover:border-white/25 hover:bg-white/[0.13] active:scale-[0.98]"
+              >
+                Continue shopping
+
+                <ArrowRight
+                  size={15}
+                  strokeWidth={1.7}
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                />
+              </button>
+            </div>
+
+          ) : (
+
+            /* =================================
+                CART ITEMS
+            ================================= */
+
+            <div className="space-y-3">
+
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="group relative overflow-hidden rounded-[24px] border border-white/[0.10] bg-white/[0.045] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.18] hover:bg-white/[0.07]"
+                >
+
+                  {/* CARD GLASS HIGHLIGHT */}
+                  <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+                  {/* PRODUCT INFORMATION */}
+                  <div className="flex items-start justify-between gap-4">
+
+                    <div className="min-w-0 flex-1">
+
+                      <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.12em] text-[#A9C5FF]/80">
+                        ZELLO Selection
+                      </span>
+
+                      <h3 className="text-[14px] font-semibold leading-[1.4] tracking-[-0.02em] text-white">
+                        {item.name}
+                      </h3>
+
+                      <p className="mt-2 text-[12px] text-white/45">
+                        {formatPrice(item.price)} each
+                      </p>
+                    </div>
+
+                    {/* REMOVE BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => onRemove(item.id)}
+                      aria-label={`Remove ${item.name} from bag`}
+                      tabIndex={isOpen ? 0 : -1}
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.05] text-white/40 transition-all duration-300 hover:border-red-400/20 hover:bg-red-400/10 hover:text-red-300 active:scale-95"
+                    >
+                      <Trash2 size={15} strokeWidth={1.6} />
+                    </button>
+                  </div>
+
+                  {/* PRODUCT FOOTER */}
+                  <div className="mt-5 flex items-center justify-between border-t border-white/[0.08] pt-4">
+
+                    {/* QUANTITY */}
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.05] px-3 py-1.5">
+
+                      <span className="text-[10px] font-medium text-white/40">
+                        Qty
+                      </span>
+
+                      <span className="text-[12px] font-semibold text-white">
+                        {item.quantity}
+                      </span>
+                    </div>
+
+                    {/* LINE TOTAL */}
+                    <span className="text-[15px] font-semibold tracking-[-0.03em] text-white">
+                      {formatPrice(item.price * item.quantity)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+            </div>
+          )}
+        </div>
+
+        {/* =====================================
+            CHECKOUT SECTION
+        ===================================== */}
+
+        <div className="relative shrink-0 border-t border-white/[0.10] bg-white/[0.035] px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-6 backdrop-blur-2xl sm:px-8 sm:pt-7">
+
+          {/* SUBTOTAL */}
+          <div className="mb-3 flex items-center justify-between">
+
+            <span className="text-[12px] font-medium text-white/45">
+              Subtotal
+            </span>
+
+            <span className="text-[15px] font-semibold tracking-[-0.025em] text-white">
+              {formatPrice(total)}
+            </span>
+          </div>
+
+          {/* SHIPPING */}
+          <div className="mb-6 flex items-center justify-between">
+
+            <span className="text-[12px] text-white/45">
+              Shipping
+            </span>
+
+            <span className="text-[11px] font-medium text-white/55">
+              Calculated at checkout
+            </span>
+          </div>
+
+          {/* DIVIDER */}
+          <div className="mb-5 h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent" />
+
+          {/* TOTAL */}
+          <div className="mb-6 flex items-center justify-between">
+
+            <span className="text-[14px] font-medium text-white">
+              Total
+            </span>
+
+            <span className="text-[25px] font-semibold tracking-[-0.055em] text-white">
+              {formatPrice(total)}
+            </span>
+          </div>
+
+          {/* CHECKOUT BUTTON */}
+          <button
+            type="button"
+            disabled={cart.length === 0}
+            tabIndex={isOpen ? 0 : -1}
+            onClick={() => window.alert("Demo checkout: connect this button to your checkout provider.")}
+            className="group flex min-h-[54px] w-full items-center justify-center gap-3 rounded-full bg-white px-6 text-[13px] font-semibold tracking-[-0.01em] text-[#080E18] shadow-[0_8px_32px_rgba(255,255,255,0.08)] transition-all duration-300 hover:bg-[#edf2ff] hover:shadow-[0_12px_40px_rgba(255,255,255,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:shadow-none"
+          >
+            Continue to checkout
+
+            <ArrowRight
+              size={17}
+              strokeWidth={1.8}
+              className="transition-transform duration-300 group-hover:translate-x-1 group-disabled:translate-x-0"
+            />
+          </button>
+
+          {/* BOTTOM TEXT */}
+          <div className="mt-5 flex items-center justify-center gap-2">
+
+            <span className="size-1 rounded-full bg-[#A9C5FF]" />
+
+            <p className="text-center text-[10px] font-medium tracking-[0.01em] text-white/35">
+              Thoughtfully selected. Made for everyday life.
+            </p>
+          </div>
         </div>
       </aside>
     </>

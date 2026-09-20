@@ -34,11 +34,7 @@ export function useStore() {
   return context;
 }
 
-export default function StoreLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function StoreLayout({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
 
@@ -58,20 +54,14 @@ export default function StoreLayout({
       if (existing) {
         return currentCart.map((item) =>
           item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-              }
+            ? { ...item, quantity: item.quantity + 1 }
             : item,
         );
       }
 
       return [
         ...currentCart,
-        {
-          ...product,
-          quantity: 1,
-        },
+        { ...product, quantity: 1 },
       ];
     });
 
@@ -80,18 +70,14 @@ export default function StoreLayout({
 
   function removeFromCart(productId: string) {
     setCart((currentCart) =>
-      currentCart.filter(
-        (item) => item.id !== productId,
-      ),
+      currentCart.filter((item) => item.id !== productId),
     );
   }
 
   function focusSearch() {
-    document
-      .getElementById("shop")
-      ?.scrollIntoView({
-        behavior: "smooth",
-      });
+    document.getElementById("shop")?.scrollIntoView({
+      behavior: "smooth",
+    });
 
     window.setTimeout(() => {
       searchInputRef.current?.focus();
@@ -107,7 +93,7 @@ export default function StoreLayout({
         searchInputRef,
       }}
     >
-      <div className="flex min-h-dvh flex-col bg-[#f3f5f7] font-sans text-[#1c242b] antialiased selection:bg-[#2f6fed] selection:text-white">
+      <div className="flex min-h-dvh w-full flex-col bg-[#080E18] font-sans text-white antialiased selection:bg-[#A9C5FF] selection:text-[#080E18]">
         <NavBar
           cartCount={cartCount}
           onSearch={focusSearch}
@@ -118,9 +104,8 @@ export default function StoreLayout({
           {children}
         </main>
 
-        <div className="mx-auto w-[calc(100%-20px)] max-w-[1440px] sm:w-[calc(100%-32px)]">
-          <Footer />
-        </div>
+        {/* Full-width footer */}
+        <Footer />
 
         <CartDrawer
           cart={cart}
