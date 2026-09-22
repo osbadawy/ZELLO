@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, ShoppingBag, X, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, ShoppingBag, Trash2, X } from "lucide-react";
 
-import type { CartItem } from "./types";
-import { formatPrice } from "./utils";
+import type { CartItem } from "./StoreLayout";
 
 type CartDrawerProps = {
   cart: CartItem[];
@@ -13,22 +13,37 @@ type CartDrawerProps = {
   onRemove: (productId: string) => void;
 };
 
+function formatPrice(price: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(price);
+  } catch {
+    return `${price.toFixed(2)} ${currency}`;
+  }
+}
+
 export default function CartDrawer({
   cart,
   isOpen,
   onClose,
   onRemove,
 }: CartDrawerProps) {
+  const router = useRouter();
+
   const drawerRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
 
-  /* =========================================
-     KEYBOARD & SCROLL MANAGEMENT
-  ========================================= */
+  const currency = cart[0]?.currency ?? "USD";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -41,7 +56,6 @@ export default function CartDrawer({
         : null;
 
     document.body.style.overflow = "hidden";
-
     closeButtonRef.current?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -58,8 +72,8 @@ export default function CartDrawer({
 
       const focusable = Array.from(
         drawer.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
       );
 
       if (focusable.length === 0) {
@@ -84,17 +98,24 @@ export default function CartDrawer({
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
-
       previousFocusRef.current?.focus();
     };
   }, [isOpen, onClose]);
 
+  function handleCheckout() {
+    if (cart.length === 0) return;
+
+    sessionStorage.setItem(
+      "quickshipgo:checkout",
+      JSON.stringify(cart),
+    );
+
+    onClose();
+    router.push("/checkout");
+  }
+
   return (
     <>
-      {/* =========================================
-          BACKDROP
-      ========================================= */}
-
       <button
         type="button"
         onClick={onClose}
@@ -107,10 +128,6 @@ export default function CartDrawer({
             : "invisible pointer-events-none opacity-0"
         }`}
       />
-
-      {/* =========================================
-          CART DRAWER
-      ========================================= */}
 
       <aside
         ref={drawerRef}
@@ -125,27 +142,14 @@ export default function CartDrawer({
             : "invisible translate-x-full"
         }`}
       >
-
-        {/* =====================================
-            GLASS HIGHLIGHT
-        ===================================== */}
-
         <div className="pointer-events-none absolute inset-y-0 left-0 w-px bg-gradient-to-b from-white/30 via-white/10 to-transparent" />
 
-        {/* =====================================
-            HEADER
-        ===================================== */}
-
         <div className="relative flex shrink-0 items-center justify-between border-b border-white/[0.08] px-6 py-6 sm:px-8 sm:py-7">
-
           <div className="flex items-center gap-3">
-
-            {/* BAG ICON */}
             <div className="flex size-11 items-center justify-center rounded-2xl border border-white/[0.12] bg-white/[0.07] backdrop-blur-xl">
               <ShoppingBag size={19} strokeWidth={1.6} className="text-white/85" />
             </div>
 
-            {/* TITLE */}
             <div>
               <h2
                 id="cart-drawer-title"
@@ -162,7 +166,6 @@ export default function CartDrawer({
             </div>
           </div>
 
-          {/* CLOSE BUTTON */}
           <button
             ref={closeButtonRef}
             type="button"
@@ -175,21 +178,9 @@ export default function CartDrawer({
           </button>
         </div>
 
-        {/* =====================================
-            CONTENT
-        ===================================== */}
-
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-7 [scrollbar-color:#ffffff20_transparent] [scrollbar-width:thin] sm:px-8">
-
           {cart.length === 0 ? (
-
-            /* =================================
-                EMPTY CART
-            ================================= */
-
             <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center">
-
-              {/* EMPTY BAG ICON */}
               <div className="relative mb-7 flex size-24 items-center justify-center rounded-[30px] border border-white/[0.12] bg-white/[0.05] shadow-[0_20px_60px_rgba(0,0,0,0.12)] backdrop-blur-xl">
                 <ShoppingBag size={34} strokeWidth={1.2} className="text-white/55" />
 
@@ -198,7 +189,6 @@ export default function CartDrawer({
                 </span>
               </div>
 
-              {/* EMPTY MESSAGE */}
               <h3 className="text-[22px] font-semibold tracking-[-0.045em] text-white">
                 Your bag is empty.
               </h3>
@@ -207,7 +197,6 @@ export default function CartDrawer({
                 Discover something worth keeping. Your next favorite find is just a click away.
               </p>
 
-              {/* CONTINUE SHOPPING */}
               <button
                 type="button"
                 onClick={onClose}
@@ -223,31 +212,19 @@ export default function CartDrawer({
                 />
               </button>
             </div>
-
           ) : (
-
-            /* =================================
-                CART ITEMS
-            ================================= */
-
             <div className="space-y-3">
-
               {cart.map((item) => (
                 <div
                   key={item.id}
                   className="group relative overflow-hidden rounded-[24px] border border-white/[0.10] bg-white/[0.045] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl transition-all duration-300 hover:border-white/[0.18] hover:bg-white/[0.07]"
                 >
-
-                  {/* CARD GLASS HIGHLIGHT */}
                   <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
-                  {/* PRODUCT INFORMATION */}
                   <div className="flex items-start justify-between gap-4">
-
                     <div className="min-w-0 flex-1">
-
                       <span className="mb-2 block text-[10px] font-medium uppercase tracking-[0.12em] text-[#A9C5FF]/80">
-                        ZELLO Selection
+                        quickshipgo Selection
                       </span>
 
                       <h3 className="text-[14px] font-semibold leading-[1.4] tracking-[-0.02em] text-white">
@@ -255,11 +232,10 @@ export default function CartDrawer({
                       </h3>
 
                       <p className="mt-2 text-[12px] text-white/45">
-                        {formatPrice(item.price)} each
+                        {formatPrice(item.price, item.currency)} each
                       </p>
                     </div>
 
-                    {/* REMOVE BUTTON */}
                     <button
                       type="button"
                       onClick={() => onRemove(item.id)}
@@ -271,12 +247,8 @@ export default function CartDrawer({
                     </button>
                   </div>
 
-                  {/* PRODUCT FOOTER */}
                   <div className="mt-5 flex items-center justify-between border-t border-white/[0.08] pt-4">
-
-                    {/* QUANTITY */}
                     <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.05] px-3 py-1.5">
-
                       <span className="text-[10px] font-medium text-white/40">
                         Qty
                       </span>
@@ -286,39 +258,31 @@ export default function CartDrawer({
                       </span>
                     </div>
 
-                    {/* LINE TOTAL */}
                     <span className="text-[15px] font-semibold tracking-[-0.03em] text-white">
-                      {formatPrice(item.price * item.quantity)}
+                      {formatPrice(
+                        item.price * item.quantity,
+                        item.currency,
+                      )}
                     </span>
                   </div>
                 </div>
               ))}
-
             </div>
           )}
         </div>
 
-        {/* =====================================
-            CHECKOUT SECTION
-        ===================================== */}
-
         <div className="relative shrink-0 border-t border-white/[0.10] bg-white/[0.035] px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-6 backdrop-blur-2xl sm:px-8 sm:pt-7">
-
-          {/* SUBTOTAL */}
           <div className="mb-3 flex items-center justify-between">
-
             <span className="text-[12px] font-medium text-white/45">
               Subtotal
             </span>
 
             <span className="text-[15px] font-semibold tracking-[-0.025em] text-white">
-              {formatPrice(total)}
+              {formatPrice(total, currency)}
             </span>
           </div>
 
-          {/* SHIPPING */}
           <div className="mb-6 flex items-center justify-between">
-
             <span className="text-[12px] text-white/45">
               Shipping
             </span>
@@ -328,27 +292,23 @@ export default function CartDrawer({
             </span>
           </div>
 
-          {/* DIVIDER */}
           <div className="mb-5 h-px bg-gradient-to-r from-transparent via-white/[0.15] to-transparent" />
 
-          {/* TOTAL */}
           <div className="mb-6 flex items-center justify-between">
-
             <span className="text-[14px] font-medium text-white">
               Total
             </span>
 
             <span className="text-[25px] font-semibold tracking-[-0.055em] text-white">
-              {formatPrice(total)}
+              {formatPrice(total, currency)}
             </span>
           </div>
 
-          {/* CHECKOUT BUTTON */}
           <button
             type="button"
             disabled={cart.length === 0}
             tabIndex={isOpen ? 0 : -1}
-            onClick={() => window.alert("Demo checkout: connect this button to your checkout provider.")}
+            onClick={handleCheckout}
             className="group flex min-h-[54px] w-full items-center justify-center gap-3 rounded-full bg-white px-6 text-[13px] font-semibold tracking-[-0.01em] text-[#080E18] shadow-[0_8px_32px_rgba(255,255,255,0.08)] transition-all duration-300 hover:bg-[#edf2ff] hover:shadow-[0_12px_40px_rgba(255,255,255,0.14)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-white disabled:hover:shadow-none"
           >
             Continue to checkout
@@ -360,9 +320,7 @@ export default function CartDrawer({
             />
           </button>
 
-          {/* BOTTOM TEXT */}
           <div className="mt-5 flex items-center justify-center gap-2">
-
             <span className="size-1 rounded-full bg-[#A9C5FF]" />
 
             <p className="text-center text-[10px] font-medium tracking-[0.01em] text-white/35">

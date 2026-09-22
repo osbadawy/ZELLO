@@ -31,7 +31,7 @@ export default function ProductObject({ type }: ProductObjectProps) {
 
             {/* BRAND DETAIL */}
             <div className="absolute bottom-[15%] left-1/2 -translate-x-1/2 text-[clamp(7px,0.8vw,11px)] font-semibold tracking-[0.08em] text-white/70">
-              ZELLO
+              quickshipgo
             </div>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function ProductObject({ type }: ProductObjectProps) {
 
             {/* BRAND */}
             <div className="absolute bottom-[7%] left-1/2 -translate-x-1/2 text-[clamp(6px,0.7vw,9px)] font-medium tracking-[0.12em] text-white/50">
-              ZELLO
+              quickshipgo
             </div>
           </div>
         </div>

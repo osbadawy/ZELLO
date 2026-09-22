@@ -2,14 +2,12 @@
 
 import ShopIntro from "./ShopIntro";
 import ShopEditorialStrip from "./ShopEditorialStrip";
-import CategoryGrid from "./CategoryGrid";
+import BentoCategoryGrid from "./BentoCategoryGrid";
 
 export default function ShopPageClient() {
   return (
     <div id="shop" className="w-full bg-[#f3f5f7] text-[#1c242b]">
-      <ShopIntro />
-      <CategoryGrid/>
-      <ShopEditorialStrip />
+      <BentoCategoryGrid/>
     </div>
   );
 }

@@ -41,7 +41,7 @@ const particles = Array.from({ length: 45 }, (_, index) => ({
 
 function TransitionBackground() {
   return (
-    <div aria-hidden="true" className="zello-transition-background">
+    <div aria-hidden="true" className="quickshipgo-transition-background">
 
       <div className="absolute inset-0 bg-[#080E18]" />
 
@@ -53,7 +53,7 @@ function TransitionBackground() {
         {particles.map((particle) => (
           <span
             key={particle.id}
-            className="zello-transition-particle absolute rounded-full bg-[#dce8ff]"
+            className="quickshipgo-transition-particle absolute rounded-full bg-[#dce8ff]"
             style={{
               left: particle.left,
               top: particle.top,
@@ -371,7 +371,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
   return (
     <PageTransitionContext.Provider value={{ navigate }}>
       <div
-        className="zello-transition-shell"
+        className="quickshipgo-transition-shell"
         data-transition-phase={phase}
         onClickCapture={handleClickCapture}
         aria-busy={phase !== "idle"}
@@ -381,7 +381,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
         <TransitionBackground />
 
         {/* PAGE CONTENT */}
-        <div className="zello-transition-content">
+        <div className="quickshipgo-transition-content">
           {children}
         </div>
 
@@ -392,7 +392,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            TRANSITION SHELL
         ===================================================== */
 
-        .zello-transition-shell {
+        .quickshipgo-transition-shell {
           position: relative;
           min-height: 100svh;
           background: #080e18;
@@ -402,7 +402,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            PARTICLE BACKGROUND
         ===================================================== */
 
-        .zello-transition-background {
+        .quickshipgo-transition-background {
           position: fixed;
           inset: 0;
           z-index: 9998;
@@ -414,7 +414,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
           transition: opacity 200ms ease, visibility 0s linear 200ms;
         }
 
-        .zello-transition-shell:not([data-transition-phase="idle"]) .zello-transition-background {
+        .quickshipgo-transition-shell:not([data-transition-phase="idle"]) .quickshipgo-transition-background {
           opacity: 1;
           visibility: visible;
           transition: opacity 200ms ease, visibility 0s;
@@ -424,7 +424,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            PAGE CONTENT
         ===================================================== */
 
-        .zello-transition-content {
+        .quickshipgo-transition-content {
           position: relative;
           z-index: 9999;
           min-height: 100svh;
@@ -432,7 +432,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
         }
 
         /* Disable interactions while transitioning. */
-        .zello-transition-shell:not([data-transition-phase="idle"]) .zello-transition-content {
+        .quickshipgo-transition-shell:not([data-transition-phase="idle"]) .quickshipgo-transition-content {
           pointer-events: none;
         }
 
@@ -440,7 +440,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            PHASE 1: FADE OUT
         ===================================================== */
 
-        .zello-transition-shell[data-transition-phase="leaving"] .zello-transition-content {
+        .quickshipgo-transition-shell[data-transition-phase="leaving"] .quickshipgo-transition-content {
           opacity: 0;
           transition: opacity ${FADE_OUT_DURATION}ms ease-in-out;
         }
@@ -449,7 +449,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            PHASE 2: WAIT FOR DESTINATION
         ===================================================== */
 
-        .zello-transition-shell[data-transition-phase="waiting"] .zello-transition-content {
+        .quickshipgo-transition-shell[data-transition-phase="waiting"] .quickshipgo-transition-content {
           opacity: 0;
           transition: none;
         }
@@ -458,7 +458,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            PHASE 3: FADE IN
         ===================================================== */
 
-        .zello-transition-shell[data-transition-phase="entering"] .zello-transition-content {
+        .quickshipgo-transition-shell[data-transition-phase="entering"] .quickshipgo-transition-content {
           opacity: 1;
           transition: opacity ${FADE_IN_DURATION}ms ease-in-out;
         }
@@ -467,7 +467,7 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
            FLOATING PARTICLES
         ===================================================== */
 
-        @keyframes zelloParticleFloat {
+        @keyframes quickshipgoParticleFloat {
           0%, 100% {
             transform: translate3d(0, 0, 0);
           }
@@ -477,8 +477,8 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        .zello-transition-particle {
-          animation-name: zelloParticleFloat;
+        .quickshipgo-transition-particle {
+          animation-name: quickshipgoParticleFloat;
           animation-timing-function: ease-in-out;
           animation-iteration-count: infinite;
         }
@@ -488,12 +488,12 @@ export function PageTransitionProvider({ children }: { children: ReactNode }) {
         ===================================================== */
 
         @media (prefers-reduced-motion: reduce) {
-          .zello-transition-particle {
+          .quickshipgo-transition-particle {
             animation: none;
           }
 
-          .zello-transition-background,
-          .zello-transition-content {
+          .quickshipgo-transition-background,
+          .quickshipgo-transition-content {
             transition: none !important;
           }
         }

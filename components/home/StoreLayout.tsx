@@ -3,24 +3,32 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
   type RefObject,
 } from "react";
 
-import type { CartItem, Product } from "./types";
+import type { ShopProduct } from "./ShopSection";
 
 import NavBar from "../UI/NavBar";
 import Footer from "./Footer";
 import CartDrawer from "./CartDrawer";
 
+export type CartItem = ShopProduct & {
+  quantity: number;
+};
+
 type StoreContextType = {
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  cartReady: boolean;
+  addToCart: (product: ShopProduct) => void;
   removeFromCart: (productId: string) => void;
   searchInputRef: RefObject<HTMLInputElement | null>;
 };
+
+const CART_STORAGE_KEY = "quickshipgo:cart:v1";
 
 const StoreContext = createContext<StoreContextType | null>(null);
 
@@ -36,20 +44,63 @@ export function useStore() {
 
 export default function StoreLayout({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartReady, setCartReady] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const cartCount = cart.reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
+  useEffect(() => {
+    try {
+      const savedCart = sessionStorage.getItem(CART_STORAGE_KEY);
 
-  function addToCart(product: Product) {
+      if (savedCart) {
+        const parsed: unknown = JSON.parse(savedCart);
+
+        if (Array.isArray(parsed)) {
+          const validItems = parsed.filter((item): item is CartItem => {
+            if (!item || typeof item !== "object") return false;
+
+            const product = item as Partial<CartItem>;
+
+            return (
+              typeof product.id === "string" &&
+              typeof product.slug === "string" &&
+              typeof product.name === "string" &&
+              typeof product.price === "number" &&
+              Number.isFinite(product.price) &&
+              product.price >= 0 &&
+              typeof product.currency === "string" &&
+              typeof product.quantity === "number" &&
+              Number.isSafeInteger(product.quantity) &&
+              product.quantity > 0
+            );
+          });
+
+          setCart(validItems);
+        }
+      }
+    } catch {
+      sessionStorage.removeItem(CART_STORAGE_KEY);
+    } finally {
+      setCartReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!cartReady) return;
+
+    try {
+      sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch {
+      // The cart remains usable in memory if browser storage is unavailable.
+    }
+  }, [cart, cartReady]);
+
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  function addToCart(product: ShopProduct) {
     setCart((currentCart) => {
-      const existing = currentCart.find(
-        (item) => item.id === product.id,
-      );
+      const existing = currentCart.find((item) => item.id === product.id);
 
       if (existing) {
         return currentCart.map((item) =>
@@ -59,10 +110,7 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
         );
       }
 
-      return [
-        ...currentCart,
-        { ...product, quantity: 1 },
-      ];
+      return [...currentCart, { ...product, quantity: 1 }];
     });
 
     setCartOpen(true);
@@ -88,6 +136,7 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
     <StoreContext.Provider
       value={{
         cart,
+        cartReady,
         addToCart,
         removeFromCart,
         searchInputRef,
@@ -104,7 +153,6 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        {/* Full-width footer */}
         <Footer />
 
         <CartDrawer

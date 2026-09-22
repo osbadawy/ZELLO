@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 
-import {
-  Geist,
-  Geist_Mono,
-} from "next/font/google";
-
-import StoreLayout from "@/components/home/StoreLayout";
-import { PageTransitionProvider, TileTransitionProvider } from "@/components/UI/tileTransition/PageTransitionProvider";
+import { PageTransitionProvider } from "@/components/UI/tileTransition/PageTransitionProvider";
 
 import "./globals.css";
 
@@ -21,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Penta Labs",
+  title: "quickshipgo",
   description: "Useful objects for modern living.",
 };
 
@@ -37,7 +32,7 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <PageTransitionProvider>
-        <StoreLayout>{children}</StoreLayout>
+          {children}
         </PageTransitionProvider>
       </body>
     </html>

@@ -20,17 +20,7 @@ export default function NavBar({ cartCount, onSearch, onOpenCart }: NavBarProps)
       label: "Shop",
       href: "/shop",
       isActive: pathname.startsWith("/shop"),
-    },
-    {
-      label: "System",
-      href: "/system",
-      isActive: pathname === "/system",
-    },
-    {
-      label: "About",
-      href: "/about",
-      isActive: pathname === "/about",
-    },
+    }
   ];
 
   return (
@@ -76,20 +66,6 @@ export default function NavBar({ cartCount, onSearch, onOpenCart }: NavBarProps)
         {/* ACTIONS */}
         <div className="flex items-center justify-end gap-2 sm:gap-3">
 
-          {/* SEARCH */}
-          <button
-            type="button"
-            onClick={onSearch}
-            aria-label="Search products"
-            className="group relative flex size-10 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.06] text-white/75 backdrop-blur-xl transition-all duration-300 hover:border-white/25 hover:bg-white/[0.12] hover:text-white active:scale-95 sm:size-11"
-          >
-            <Search
-              size={18}
-              strokeWidth={1.7}
-              className="transition-transform duration-300 group-hover:scale-110"
-            />
-          </button>
-
           {/* SHOPPING BAG */}
           <button
             type="button"
@@ -110,20 +86,6 @@ export default function NavBar({ cartCount, onSearch, onOpenCart }: NavBarProps)
               </span>
             )}
           </button>
-
-          {/* DESKTOP SHOP BUTTON */}
-          <Link
-            href="/shop"
-            className="group ml-2 hidden min-h-10 items-center justify-center gap-2 rounded-full bg-white px-5 text-[12px] font-semibold tracking-[-0.01em] text-[#080d18] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#edf2ff] active:scale-[0.98] xl:inline-flex"
-          >
-            Explore
-
-            <ArrowUpRight
-              size={15}
-              strokeWidth={1.8}
-              className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            />
-          </Link>
         </div>
 
         {/* MOBILE NAVIGATION */}

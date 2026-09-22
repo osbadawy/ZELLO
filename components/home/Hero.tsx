@@ -31,15 +31,10 @@ export default function Hero() {
       style={{ minHeight: `calc(100svh - ${navbarHeight}px)` }}
       className="relative isolate flex w-full items-center justify-center overflow-hidden bg-[#080d18] px-5 py-16 sm:px-8 lg:px-12"
     >
-
       {/* FULL-SCREEN PARTICLE BACKGROUND */}
       <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
         <PentaLabsParticleField
-          style={{
-            width: "100%",
-            height: "100%",
-            minHeight: "100%",
-          }}
+          style={{ width: "100%", height: "100%", minHeight: "100%" }}
           background="#080d18"
           particleColor="#dce8ff"
           density={0.02}
@@ -62,9 +57,9 @@ export default function Hero() {
       <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl items-center justify-center">
 
         {/* GLASS PANEL */}
-        <div className="pointer-events-auto relative w-full max-w-[1290px] overflow-hidden rounded-[32px] border border-white/15 bg-white/[0.07] px-6 py-12 text-center text-white shadow-[0_24px_80px_rgba(0,0,0,0.20)] backdrop-blur-xl backdrop-saturate-150 sm:rounded-[40px] sm:px-12 sm:py-16 lg:px-16 lg:py-20">
+        <div className="pointer-events-auto relative w-full max-w-[780px] overflow-hidden rounded-[32px] border border-white/15 bg-white/[0.07] px-6 py-12 text-center text-white shadow-[0_24px_80px_rgba(0,0,0,0.20)] backdrop-blur-xl backdrop-saturate-150 sm:rounded-[40px] sm:px-10 sm:py-14 lg:px-14 lg:py-16">
 
-          {/* Glass highlight */}
+          {/* GLASS HIGHLIGHT */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent"
@@ -73,15 +68,15 @@ export default function Hero() {
           {/* MAIN HEADING */}
           <h1
             id="hero-title"
-            className="mx-auto max-w-[1120px] text-[clamp(3.25rem,7vw,6.5rem)] font-semibold leading-[1.05] tracking-[-0.065em] text-white"
+            className="mx-auto max-w-[680px] text-[clamp(3.25rem,7vw,6.5rem)] font-semibold leading-[1.05] tracking-[-0.065em] text-white"
           >
-            Better things Less noise.
+            Quick Ship Go
           </h1>
 
           {/* ACTIONS */}
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row">
 
-            {/* Primary button */}
+            {/* PRIMARY BUTTON */}
             <a
               href="#shop"
               className="group inline-flex min-h-[50px] w-full items-center justify-center gap-3 rounded-full bg-white px-7 py-3 text-[13px] font-semibold tracking-[-0.01em] text-[#080d18] shadow-[0_8px_30px_rgba(255,255,255,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#edf2ff] hover:shadow-[0_12px_35px_rgba(255,255,255,0.18)] active:scale-[0.98] sm:w-auto"

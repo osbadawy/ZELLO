@@ -7,7 +7,7 @@ export default function Footer() {
   const exploreLinks = [
     { label: "All products", href: "/shop" },
     { label: "Our system", href: "/system" },
-    { label: "About ZELLO", href: "/about" },
+    { label: "About quickshipgo", href: "/about" },
   ];
 
   const supportLinks = [
@@ -58,7 +58,7 @@ export default function Footer() {
               Explore
             </h3>
 
-            <nav aria-label="Explore ZELLO" className="flex flex-col items-start gap-4">
+            <nav aria-label="Explore quickshipgo" className="flex flex-col items-start gap-4">
               {exploreLinks.map((link) => (
                 <Link
                   key={link.label}
@@ -131,7 +131,7 @@ export default function Footer() {
             </h3>
 
             <p className="mb-5 max-w-[280px] text-[12px] leading-[1.7] text-white/45">
-              Discover new arrivals, curated collections, and the latest from ZELLO.
+              Discover new arrivals, curated collections, and the latest from quickshipgo.
             </p>
 
             {/* NEWSLETTER CARD */}
@@ -186,7 +186,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-5 pt-7 sm:flex-row">
 
           <span className="text-[11px] font-medium tracking-[-0.01em] text-white/35">
-            © {currentYear} ZELLO. All rights reserved.
+            © {currentYear} quickshipgo. All rights reserved.
           </span>
 
           <div className="flex items-center gap-2">
