@@ -64,12 +64,21 @@ model Product {
   // Instagram video
   instagramVideoUrl String? @db.Text
 
+  // Product ratings (0-10)
+  // NULL means the product has not been rated.
+  // Supports decimal ratings, e.g. 8.5 or 9.7.
+  dailyUseRating    Decimal? @db.Decimal(3, 1)
+  reliabilityRating Decimal? @db.Decimal(3, 1)
+  qualityRating     Decimal? @db.Decimal(3, 1)
+  recommendRating   Decimal? @db.Decimal(3, 1)
+  overallRating     Decimal? @db.Decimal(3, 1)
+
   // Availability
   isActive Boolean @default(false)
 
   // Relations
-  images   ProductImage[]
-  variants ProductVariant[]
+  images     ProductImage[]
+  variants   ProductVariant[]
   categories Category[]
 
   // Timestamps
@@ -78,6 +87,7 @@ model Product {
 
   @@index([isActive])
   @@index([createdAt])
+  @@index([overallRating])
 }
 
 // ============================================================
